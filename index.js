@@ -35,4 +35,4 @@ const makeCommits = async (n) => {
 };
 
 // Start committing process
-makeCommits(100); // Change 10 to the number of commits you want
+makeCommits(50); // Change 10 to the number of commits you want
