@@ -5,29 +5,25 @@ import random from "random";
 
 const FILE_PATH = "./data.json";
 const git = simpleGit();
+const TOTAL_BOXES = 50;
 
-const TOTAL_DAYS = 50;
-
-/**
- * Generate unique random days in the last year
- */
-const getUniqueDays = (count) => {
+// Generate 50 unique UTC days
+const getUniqueDaysUTC = (count) => {
     const days = new Set();
-
     while (days.size < count) {
-        days.add(random.int(0, 364));
+        days.add(random.int(1, 364));
     }
-
     return [...days];
 };
 
 const makeCommits = async () => {
-    const uniqueDays = getUniqueDays(TOTAL_DAYS);
+    const days = getUniqueDaysUTC(TOTAL_BOXES);
 
-    for (let i = 0; i < uniqueDays.length; i++) {
-        const date = moment()
-            .subtract(uniqueDays[i], "days")
-            .hour(12)
+    for (let i = 0; i < days.length; i++) {
+        // Force UTC midnight (prevents collisions)
+        const date = moment.utc()
+            .subtract(days[i], "days")
+            .hour(0)
             .minute(0)
             .second(0)
             .format();
@@ -35,14 +31,14 @@ const makeCommits = async () => {
         await jsonfile.writeFile(FILE_PATH, { date });
 
         await git.add([FILE_PATH]);
-        await git.commit(`Daily commit: ${date}`, {
+        await git.commit(`UTC daily commit: ${date}`, {
             "--date": date,
         });
 
-        console.log(`✅ Box ${i + 1}/50 → ${date}`);
+        console.log(`🟩 Box ${i + 1}/50 → ${date}`);
     }
 };
 
 makeCommits()
-    .then(() => console.log("🎉 50 unique-day commits created"))
+    .then(() => console.log("🎉 Exactly 50 GitHub boxes generated"))
     .catch(console.error);
