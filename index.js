@@ -3,36 +3,36 @@ import moment from "moment";
 import simpleGit from "simple-git";
 import random from "random";
 
-const path = "./data.json";
+const FILE_PATH = "./data.json";
 const git = simpleGit();
 
-// Function to make multiple commits
+/**
+ * Make multiple backdated commits
+ * @param {number} n - number of commits
+ */
 const makeCommits = async (n) => {
-    if (n <= 0) return;
+    for (let i = 0; i < n; i++) {
+        // Pick a random day within the last 365 days
+        const date = moment()
+            .subtract(random.int(0, 364), "days")
+            .format();
 
-    const x = random.int(0, 54); // Random week offset
-    const y = random.int(0, 6);  // Random day offset
-    const date = moment()
-        .subtract(1, "y")
-        .add(x, "w")
-        .add(y, "d")
-        .format();
+        const data = { date };
 
-    const data = { date };
+        // Write date to file
+        await jsonfile.writeFile(FILE_PATH, data);
 
-    jsonfile.writeFile(path, data, async () => {
-        try {
-            await git.add([path]);
-            await git.commit(date, { "--date": date });
-            console.log(`Commit ${n} made at ${date}`);
+        // Stage & commit with backdated author date
+        await git.add([FILE_PATH]);
+        await git.commit(`Backdated commit: ${date}`, {
+            "--date": date,
+        });
 
-            // Recursively make more commits
-            await makeCommits(n - 1);
-        } catch (error) {
-            console.error("Git commit error:", error);
-        }
-    });
+        console.log(`✅ Commit ${i + 1} created at ${date}`);
+    }
 };
 
-// Start committing process
-makeCommits(50); // Change 10 to the number of commits you want
+// 🔢 Change this number to control how many commits you want
+makeCommits(50)
+    .then(() => console.log("🎉 All commits created successfully"))
+    .catch((err) => console.error("❌ Error:", err));
