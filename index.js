@@ -6,33 +6,43 @@ import random from "random";
 const FILE_PATH = "./data.json";
 const git = simpleGit();
 
+const TOTAL_DAYS = 50;
+
 /**
- * Make multiple backdated commits
- * @param {number} n - number of commits
+ * Generate unique random days in the last year
  */
-const makeCommits = async (n) => {
-    for (let i = 0; i < n; i++) {
-        // Pick a random day within the last 365 days
+const getUniqueDays = (count) => {
+    const days = new Set();
+
+    while (days.size < count) {
+        days.add(random.int(0, 364));
+    }
+
+    return [...days];
+};
+
+const makeCommits = async () => {
+    const uniqueDays = getUniqueDays(TOTAL_DAYS);
+
+    for (let i = 0; i < uniqueDays.length; i++) {
         const date = moment()
-            .subtract(random.int(0, 364), "days")
+            .subtract(uniqueDays[i], "days")
+            .hour(12)
+            .minute(0)
+            .second(0)
             .format();
 
-        const data = { date };
+        await jsonfile.writeFile(FILE_PATH, { date });
 
-        // Write date to file
-        await jsonfile.writeFile(FILE_PATH, data);
-
-        // Stage & commit with backdated author date
         await git.add([FILE_PATH]);
-        await git.commit(`Backdated commit: ${date}`, {
+        await git.commit(`Daily commit: ${date}`, {
             "--date": date,
         });
 
-        console.log(`✅ Commit ${i + 1} created at ${date}`);
+        console.log(`✅ Box ${i + 1}/50 → ${date}`);
     }
 };
 
-// 🔢 Change this number to control how many commits you want
-makeCommits(50)
-    .then(() => console.log("🎉 All commits created successfully"))
-    .catch((err) => console.error("❌ Error:", err));
+makeCommits()
+    .then(() => console.log("🎉 50 unique-day commits created"))
+    .catch(console.error);
